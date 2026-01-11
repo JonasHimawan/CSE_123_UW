@@ -15,29 +15,59 @@ public class Testing {
         Repository.Commit.resetIds();
     }
 
-    // TODO: Write your tests here!
+    @Test
+    @DisplayName("Synchronize Empty Test")
+    public void testSynchronizeEmpty() throws InterruptedException{
+        commitAll(repo1, new String[]{});
+        commitAll(repo2, new String[]{"One", "Two", "Three"});
+        repo1.synchronize(repo2);
+        assertEquals(3, repo1.getRepoSize());
+        testHistory(repo1, 3, new String[]{"One", "Two", "Three"});
+    }
+    
+    @Test
+    @DisplayName("Synchronize Front Test")
+    public void testSynchronizeFront() throws InterruptedException{
+        // Initialize commit messages
+        commitAll(repo1, new String[]{"One", "Two"});
+        commitAll(repo2, new String[]{"Three", "Four"});
+        assertEquals(2, repo1.getRepoSize());
+        assertEquals(2, repo2.getRepoSize());
+        // Synchronize repo1 into repo2
+        repo2.synchronize(repo1);
+        assertEquals(4, repo2.getRepoSize());
+        assertEquals(0, repo1.getRepoSize());
+        // Make sure the history of repo1 is correctly synchronized
+        testHistory(repo2, 4, new String[]{"One", "Two", "Three", "Four"});
+    }
 
-    /////////////////////////////////////////////////////////////////////////////////
-    // PROVIDED HELPER METHODS (You don't have to use these if you don't want to!) //
-    /////////////////////////////////////////////////////////////////////////////////
+    @Test
+    @DisplayName("Synchronize Middle Test")
+    public void testSynchronizeMiddle() throws InterruptedException{
+        repo1 = new Repository("repo1");
+        repo2 = new Repository("repo2");
+        commitAll(repo1, new String[]{"One"});
+        commitAll(repo2, new String[]{"Two"});
+        commitAll(repo1, new String[]{"Three"});
+        commitAll(repo2, new String[]{"Four"});
 
-    // Commits all of the provided messages into the provided repo, making sure timestamps
-    // are correctly sequential (no ties). If used, make sure to include
-    //      'throws InterruptedException'
-    // much like we do with 'throws FileNotFoundException'. 
-    // repo and messages should be non-null.
-    // Example useage:
-    //
-    // repo1:
-    //      head -> null
-    // To commit the messages "one", "two", "three", "four"
-    //      commitAll(repo1, new String[]{"one", "two", "three", "four"})
-    // This results in the following after picture
-    // repo1:
-    //      head -> "four" -> "three" -> "two" -> "one" -> null
-    //
-    // YOU DO NOT NEED TO UNDERSTAND HOW THIS METHOD WORKS TO USE IT! (this is why documentation
-    // is important!)
+        repo1.synchronize(repo2);
+        assertEquals(4, repo1.getRepoSize());
+        
+        testHistory(repo1, 4, new String[]{"One", "Two", "Three", "Four"});
+    }
+
+    @Test
+    @DisplayName("Synchronize End Test")
+    public void testSynchronizeEnd() throws InterruptedException{
+        commitAll(repo1, new String[]{"One", "Two", "Three"});
+        commitAll(repo2, new String[]{"Four", "Five", "Six"});
+
+        repo1.synchronize(repo2);
+        assertEquals(6, repo1.getRepoSize());
+        testHistory(repo1, 6, new String[]{"One", "Two", "Three", "Four", "Five", "Six"});
+    }
+
     public void commitAll(Repository repo, String[] messages) throws InterruptedException {
         // Commit all of the provided messages
         for (String message : messages) {
@@ -54,20 +84,6 @@ public class Testing {
         }
     }
 
-    // Makes sure the given repositories history is correct up to 'n' commits, checking against
-    // all commits made in order. repo and allCommits should be non-null.
-    // Example useage:
-    //
-    // repo1:
-    //      head -> "four" -> "three" -> "two" -> "one" -> null
-    //      (Commits made in the order ["one", "two", "three", "four"])
-    // To test the getHistory() method up to n=3 commits this can be done with:
-    //      testHistory(repo1, 3, new String[]{"one", "two", "three", "four"})
-    // Similarly, to test getHistory() up to n=4 commits you'd use:
-    //      testHistory(repo1, 4, new String[]{"one", "two", "three", "four"})
-    //
-    // YOU DO NOT NEED TO UNDERSTAND HOW THIS METHOD WORKS TO USE IT! (this is why documentation
-    // is important!)
     public void testHistory(Repository repo, int n, String[] allCommits) {
         int totalCommits = repo.getRepoSize();
         assertTrue(n <= totalCommits,
